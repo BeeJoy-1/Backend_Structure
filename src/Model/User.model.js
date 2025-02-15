@@ -1,4 +1,4 @@
-import mongoose from "mongoose";
+const mongoose = require("mongoose");
 const { Schema } = mongoose;
 
 const UserSchema = new Schema(
@@ -27,7 +27,7 @@ const UserSchema = new Schema(
       required: [true, "Mobile number Missing!"],
       trim: true,
       unique: true,
-      max: [11, "Invalid Phone Number"],
+      // max: [11, "Invalid Phone Number"],
     },
     Address: {
       type: String,

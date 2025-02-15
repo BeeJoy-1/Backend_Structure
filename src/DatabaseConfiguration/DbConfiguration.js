@@ -10,7 +10,9 @@ const DbConnection = async () => {
 
     console.log(
       chalk.blue.bgGreenBright.bold(
-        `Database Connected! || ${(await DatabaseInfo).connection.host}`
+        `Database Connected! || ${
+          (await DatabaseInfo).connection.host
+        } ${DBname}`
       )
     );
   } catch (error) {
