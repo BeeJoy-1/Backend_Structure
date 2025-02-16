@@ -12,29 +12,59 @@ const { UserModel } = require("../Model/User.model.js");
 const CreateUser = asyncHandeller(async (req, res, next) => {
   const { FirstName, LastName, Email_Adress, Mobile, Address, Password } =
     req?.body;
-  if (!FirstName) {
-    res.status(404).json(new ApiError(false, null, 500, "FirstName Missing!!"));
-  }
-  if (!LastName) {
-    res.status(404).json(new ApiError(false, null, 500, "LastName Missing!!"));
-  }
-  if (!Email_Adress) {
-    res
-      .status(404)
-      .json(new ApiError(false, null, 500, "Email_Adress Missing!!"));
-  }
-  if (!Mobile) {
-    res.status(404).json(new ApiError(false, null, 500, "Mobile Missing!!"));
-  }
-  if (!Address) {
-    res.status(404).json(new ApiError(false, null, 500, "Address Missing!!"));
-  }
-  if (!Password) {
-    res.status(404).json(new ApiError(false, null, 500, "Password Missing!!"));
-  }
 
   //send Data to database
   try {
+    if (!FirstName) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "FirstName Missing!!"));
+    }
+    if (!LastName) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "LastName Missing!!"));
+    }
+    if (!Email_Adress) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "Email_Adress Missing!!"));
+    }
+    if (!Mobile) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "Mobile Missing!!"));
+    }
+    if (!Address) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "Address Missing!!"));
+    }
+    if (!Password) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "Password Missing!!"));
+    }
+
+    //check if User Already exists or not
+
+    const ExistUser = await UserModel.find({
+      $or: [{ FirstName: FirstName }, { Email_Adress: Email_Adress }],
+    });
+
+    if (ExistUser?.length) {
+      return res
+        .status(404)
+        .json(
+          new ApiError(
+            false,
+            null,
+            400,
+            `${ExistUser[0]?.FirstName} Already Exists!`
+          )
+        );
+    }
+
     const Users = await new UserModel({
       FirstName,
       LastName,
@@ -44,14 +74,32 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
       Password,
     }).save();
     if (Users) {
+      const RecentCreatedUser = await UserModel.find({
+        $or: [{ FirstName: FirstName }, { Email_Adress: Email_Adress }],
+      }).select("-Password -_id");
       return res
         .status(200)
         .json(
-          new ApiResponse(true, Users, 200, "Users Created Successfully", null)
+          new ApiResponse(
+            true,
+            RecentCreatedUser,
+            200,
+            "Users Created Successfully",
+            null
+          )
         );
     }
   } catch (error) {
-    console.log(error);
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          `Registration controller error : ${error}`
+        )
+      );
   }
 });
 
