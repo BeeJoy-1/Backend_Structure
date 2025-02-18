@@ -2,6 +2,7 @@ const { ApiError } = require("../Utils/ApiError.js");
 const { ApiResponse } = require("../Utils/ApiResponse.js");
 const { asyncHandeller } = require("../Utils/asyncHandeller.js");
 const { UserModel } = require("../Model/User.model.js");
+const { EmailChecker, PasswordChecker } = require("../Utils/Checker.js");
 
 /**
  *todo : createUser controller implement
@@ -25,10 +26,12 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
         .status(404)
         .json(new ApiError(false, null, 500, "LastName Missing!!"));
     }
-    if (!Email_Adress) {
+    if (!Email_Adress || !EmailChecker(Email_Adress)) {
       return res
         .status(404)
-        .json(new ApiError(false, null, 500, "Email_Adress Missing!!"));
+        .json(
+          new ApiError(false, null, 500, "Email_Adress missing or Invalid!!")
+        );
     }
     if (!Mobile) {
       return res
@@ -40,10 +43,17 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
         .status(404)
         .json(new ApiError(false, null, 500, "Address Missing!!"));
     }
-    if (!Password) {
+    if (!Password || !PasswordChecker(Password)) {
       return res
         .status(404)
-        .json(new ApiError(false, null, 500, "Password Missing!!"));
+        .json(
+          new ApiError(
+            false,
+            null,
+            500,
+            "Password must contain minimum eight characters, at least one uppercase letter, one lowercase letter and one number:"
+          )
+        );
     }
 
     //check if User Already exists or not
