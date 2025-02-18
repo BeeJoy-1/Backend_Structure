@@ -6,9 +6,10 @@ const EmailChecker = (email = "blabla@gmail.com") => {
 };
 
 const PasswordChecker = (Password = "BlackNigga003") => {
-  const PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/;
-  const textResult = PasswordRegex.test(Password);
-  return textResult;
+  const PasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{6,16}$/;
+  const textResultPass = PasswordRegex.test(Password);
+
+  return textResultPass;
 };
 
 module.exports = { EmailChecker, PasswordChecker };

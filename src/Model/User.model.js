@@ -1,6 +1,5 @@
 const mongoose = require("mongoose");
 const { Schema } = mongoose;
-const bcrypt = require("bcrypt");
 
 const UserSchema = new Schema(
   {
@@ -42,25 +41,12 @@ const UserSchema = new Schema(
     OTP: {
       type: Number,
     },
-    RefreshToken: {
+    Token: {
       type: String,
     },
   },
   { timestamps: true }
 );
-
-UserSchema.pre("save", async function (next) {
-  if (this.isModified(this.Password)) {
-    this.Password = await bcrypt.hash(this.Password, 10);
-    next();
-  }
-  next();
-});
-
-UserSchema.methods.isValidatePassword = async (plainPassword) => {
-  const PasswordResult = await bcrypt.compare(plainPassword, this.Password);
-  return PasswordResult;
-};
 
 const UserModel = mongoose.model("User", UserSchema);
 
