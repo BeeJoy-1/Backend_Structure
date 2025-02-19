@@ -3,7 +3,11 @@ const { ApiResponse } = require("../Utils/ApiResponse.js");
 const { asyncHandeller } = require("../Utils/asyncHandeller.js");
 const { UserModel } = require("../Model/User.model.js");
 const { EmailChecker, PasswordChecker } = require("../Utils/Checker.js");
-const { bcryptPassword, generateToken } = require("../Helper/Helper.js");
+const {
+  bcryptPassword,
+  generateToken,
+  DecodePass,
+} = require("../Helper/Helper.js");
 const { SendMail } = require("../Utils/SendMail.js");
 const { MakeOtp } = require("../Helper/OTPgenerator.js");
 
@@ -148,4 +152,56 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
   }
 });
 
-module.exports = { CreateUser };
+//Login Controller
+const LoginController = async (req, res) => {
+  try {
+    const { Email_Adress, Password } = req.body;
+    if (!Email_Adress || !EmailChecker(Email_Adress)) {
+      return res
+        .status(404)
+        .json(
+          new ApiError(false, null, 500, "Email_Adress missing or Invalid!!")
+        );
+    }
+    if (!Password || !PasswordChecker(Password)) {
+      return res
+        .status(404)
+        .json(
+          new ApiError(
+            false,
+            null,
+            500,
+            "Password must contain minimum eight characters, at least one uppercase letter, one lowercase letter and one number:"
+          )
+        );
+    }
+
+    //Find User
+    const FindUser = await UserModel.findOne({ Email_Adress: Email_Adress });
+    const UserPassValid = DecodePass(Password, FindUser?.Password);
+    if (UserPassValid) {
+      return res.status(200).json(
+        new ApiResponse(
+          true,
+          {
+            FirstName: FindUser?.FirstName,
+            LastName: FindUser?.LastName,
+            Mobile: FindUser?.Mobile,
+            Email_Adress: FindUser?.Email_Adress,
+          },
+          200,
+          "Login Successfull",
+          null
+        )
+      );
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(false, null, 400, `Login controller error : ${error}`)
+      );
+  }
+};
+
+module.exports = { CreateUser, LoginController };

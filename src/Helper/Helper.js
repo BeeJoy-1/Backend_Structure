@@ -10,6 +10,11 @@ const bcryptPassword = async (password) => {
   }
 };
 
+const DecodePass = async (plainPassword, encryptedPassword) => {
+  const passwordResult = await bcrypt.compare(plainPassword, encryptedPassword);
+  return passwordResult;
+};
+
 const generateToken = async (Email_Adress, Mobile) => {
   const AccessToken = await jwt.sign(
     {
@@ -23,4 +28,4 @@ const generateToken = async (Email_Adress, Mobile) => {
   return AccessToken;
 };
 
-module.exports = { bcryptPassword, generateToken };
+module.exports = { bcryptPassword, generateToken, DecodePass };
