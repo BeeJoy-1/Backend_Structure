@@ -41,6 +41,10 @@ const UserSchema = new Schema(
     OTP: {
       type: Number,
     },
+    UserIsVerified: {
+      type: Boolean,
+      default: false,
+    },
     Token: {
       type: String,
     },

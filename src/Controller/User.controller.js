@@ -4,6 +4,8 @@ const { asyncHandeller } = require("../Utils/asyncHandeller.js");
 const { UserModel } = require("../Model/User.model.js");
 const { EmailChecker, PasswordChecker } = require("../Utils/Checker.js");
 const { bcryptPassword, generateToken } = require("../Helper/Helper.js");
+const { SendMail } = require("../Utils/SendMail.js");
+const { MakeOtp } = require("../Helper/OTPgenerator.js");
 
 /**
  *todo : createUser controller implement
@@ -17,11 +19,10 @@ const options = {
 };
 
 const CreateUser = asyncHandeller(async (req, res, next) => {
-  const { FirstName, LastName, Email_Adress, Mobile, Address, Password } =
-    req?.body;
-
   //send Data to database
   try {
+    const { FirstName, LastName, Email_Adress, Mobile, Address, Password } =
+      req?.body;
     if (!FirstName) {
       return res
         .status(404)
@@ -63,7 +64,6 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
     }
 
     //check if User Already exists or not
-
     const ExistUser = await UserModel.find({
       $or: [{ FirstName: FirstName }, { Email_Adress: Email_Adress }],
     });
@@ -82,7 +82,6 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
     }
 
     //Password encrypt
-
     const HashPassword = await bcryptPassword(Password);
 
     // create a new user in database
@@ -98,17 +97,30 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
     //Create Access Token
     let AccessToken = await generateToken(Email_Adress, Mobile);
 
-    if (Users || AccessToken) {
+    // OTP generator
+    const OTP = await MakeOtp();
+
+    // send mail
+    const mailInfo = await SendMail(FirstName, OTP, Email_Adress);
+
+    if (Users || AccessToken || mailInfo) {
       // set token in database
-      const setToken = await UserModel.findOneAndUpdate(
+      await UserModel.findOneAndUpdate(
         { _id: Users._id },
         { $set: { Token: AccessToken } },
         { new: true }
       );
 
+      //Set OTP in database
+      await UserModel.findOneAndUpdate(
+        { _id: Users._id },
+        { $set: { OTP: OTP } },
+        { new: true }
+      );
+
       const RecentCreatedUser = await UserModel.find({
         $or: [{ FirstName: FirstName }, { Email_Adress: Email_Adress }],
-      }).select("-Password -_id");
+      }).select("-Password ");
       return res
         .status(200)
         .cookie("Token", AccessToken, options)
