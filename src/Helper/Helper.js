@@ -15,11 +15,10 @@ const DecodePass = async (plainPassword, encryptedPassword) => {
   return passwordResult;
 };
 
-const generateToken = async (Email_Adress, Mobile) => {
+const generateToken = async (Email_Adress) => {
   const AccessToken = await jwt.sign(
     {
       Email_Adress,
-      Mobile,
     },
     process.env.JWT_SECRET_KEY_TOKEN,
     { expiresIn: process.env.JWT_SECRET_KEY_TOKEN_EXPIRE }

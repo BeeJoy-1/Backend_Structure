@@ -98,9 +98,6 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
       Password: HashPassword,
     }).save();
 
-    //Create Access Token
-    let AccessToken = await generateToken(Email_Adress, Mobile);
-
     // OTP generator
     const OTP = await MakeOtp();
 
@@ -109,11 +106,11 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
 
     if (Users || AccessToken || mailInfo) {
       // set token in database
-      await UserModel.findOneAndUpdate(
-        { _id: Users._id },
-        { $set: { Token: AccessToken } },
-        { new: true }
-      );
+      // await UserModel.findOneAndUpdate(
+      //   { _id: Users._id },
+      //   { $set: { Token: AccessToken } },
+      //   { new: true }
+      // );
 
       //Set OTP in database
       await UserModel.findOneAndUpdate(
@@ -125,18 +122,20 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
       const RecentCreatedUser = await UserModel.find({
         $or: [{ FirstName: FirstName }, { Email_Adress: Email_Adress }],
       }).select("-Password ");
-      return res
-        .status(200)
-        .cookie("Token", AccessToken, options)
-        .json(
-          new ApiResponse(
-            true,
-            RecentCreatedUser,
-            200,
-            "Users Created Successfully",
-            null
+      return (
+        res
+          .status(200)
+          // .cookie("Token", AccessToken, options)
+          .json(
+            new ApiResponse(
+              true,
+              RecentCreatedUser,
+              200,
+              "Users Created Successfully",
+              null
+            )
           )
-        );
+      );
     }
   } catch (error) {
     return res
@@ -179,21 +178,28 @@ const LoginController = async (req, res) => {
     //Find User
     const FindUser = await UserModel.findOne({ Email_Adress: Email_Adress });
     const UserPassValid = DecodePass(Password, FindUser?.Password);
+
+    //Create Access Token
+    let AccessToken = await generateToken(Email_Adress);
+
     if (UserPassValid) {
-      return res.status(200).json(
-        new ApiResponse(
-          true,
-          {
-            FirstName: FindUser?.FirstName,
-            LastName: FindUser?.LastName,
-            Mobile: FindUser?.Mobile,
-            Email_Adress: FindUser?.Email_Adress,
-          },
-          200,
-          "Login Successfull",
-          null
-        )
-      );
+      return res
+        .status(200)
+        .cookie("AccessToken", AccessToken, options)
+        .json(
+          new ApiResponse(
+            true,
+            {
+              FirstName: FindUser?.FirstName,
+              LastName: FindUser?.LastName,
+              Mobile: FindUser?.Mobile,
+              Email_Adress: FindUser?.Email_Adress,
+            },
+            200,
+            "Login Successfull",
+            null
+          )
+        );
     }
   } catch (error) {
     return res
@@ -204,4 +210,87 @@ const LoginController = async (req, res) => {
   }
 };
 
-module.exports = { CreateUser, LoginController };
+//OTP Match Controller
+const OTPmatchController = async (req, res) => {
+  try {
+    const { Email_Adress, OTP } = req.body;
+    if (!Email_Adress || !OTP) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 400, `OPT or Email Address Invalid!`));
+    }
+
+    const ExistedEmailinDb = await UserModel.findOne({
+      $or: [{ Email_Adress: Email_Adress }, { OTP: OTP }],
+    });
+    if (ExistedEmailinDb) {
+      ExistedEmailinDb.OTP = null;
+      ExistedEmailinDb.UserIsVerified = true;
+      await ExistedEmailinDb.save();
+      return res
+        .status(200)
+        .json(new ApiResponse(true, null, 200, "OTP Verify Successfull", null));
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(false, null, 400, `OPT Match controller error : ${error}`)
+      );
+  }
+};
+
+//Forgot Password Controller
+const ForgotPassController = async (req, res) => {
+  try {
+    const { Email_Adress } = req.body;
+    if (!Email_Adress || !EmailChecker(Email_Adress)) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 400, `Email Address Invalid!`));
+    }
+
+    // Check if email exists in Database
+    const ExistedMailinDb = await UserModel.findOne({
+      Email_Adress: Email_Adress,
+    }).select("-Password -OTP");
+    if (ExistedMailinDb) {
+      const OTP = await MakeOtp();
+      await SendMail(ExistedMailinDb.FirstName, OTP, Email_Adress);
+      ExistedMailinDb.ResetOTP = OTP;
+      await ExistedMailinDb.save();
+      return (
+        res
+          .status(200)
+          // .cookie("Token", AccessToken, options)
+          .json(
+            new ApiResponse(
+              true,
+              ExistedMailinDb,
+              200,
+              "Please Check your Mail!",
+              null
+            )
+          )
+      );
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          `ForgotPassword controller error : ${error}`
+        )
+      );
+  }
+};
+
+module.exports = {
+  CreateUser,
+  LoginController,
+  OTPmatchController,
+  ForgotPassController,
+};
