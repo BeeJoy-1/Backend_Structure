@@ -217,7 +217,7 @@ const OTPmatchController = async (req, res) => {
     if (!Email_Adress || !OTP) {
       return res
         .status(404)
-        .json(new ApiError(false, null, 400, `OPT or Email Address Invalid!`));
+        .json(new ApiError(false, null, 400, `OTP or Email Address Invalid!`));
     }
 
     const ExistedEmailinDb = await UserModel.findOne({
@@ -288,9 +288,88 @@ const ForgotPassController = async (req, res) => {
   }
 };
 
+//Reset Password Controller
+const ResetPassController = async (req, res) => {
+  try {
+    const { Email_Adress, OTP, NewPassword } = req.body;
+    if (
+      !Email_Adress ||
+      !EmailChecker(Email_Adress) ||
+      !OTP ||
+      !NewPassword ||
+      !PasswordChecker(NewPassword)
+    ) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 400, `Credential Invalid!`));
+    }
+
+    const ExistedUserCheck = await UserModel.findOne({
+      $or: [{ Email_Adress: Email_Adress }, { ResetOTP: OTP }],
+    });
+
+    if (ExistedUserCheck) {
+      const NewhashPass = await bcryptPassword(NewPassword);
+      ExistedUserCheck.Password = NewhashPass;
+      ExistedUserCheck.ResetOTP = null;
+      await ExistedUserCheck.save();
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            true,
+            ExistedUserCheck,
+            200,
+            "Password Reset Successfull!",
+            null
+          )
+        );
+    }
+
+    console.log("AIGHT", ExistedUserCheck);
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          `ResetPassword controller error : ${error}`
+        )
+      );
+  }
+};
+
+//Get All Registered User
+const AllRegisteredUsers = async (req, res) => {
+  try {
+    const AllUsers = await UserModel.find({});
+    if (AllUsers?.length) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            true,
+            AllUsers,
+            200,
+            "Found All Users in Database",
+            null
+          )
+        );
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(new ApiError(false, null, 400, `Users Couldnt be Found!`));
+  }
+};
+
 module.exports = {
   CreateUser,
   LoginController,
   OTPmatchController,
   ForgotPassController,
+  ResetPassController,
+  AllRegisteredUsers,
 };

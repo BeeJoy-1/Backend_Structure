@@ -7,6 +7,8 @@ const {
   LoginController,
   OTPmatchController,
   ForgotPassController,
+  ResetPassController,
+  AllRegisteredUsers,
 } = require("../../Controller/User.controller.js");
 // const { AuthGuard } = require("../../Middleware/Authguard.js");
 
@@ -14,5 +16,7 @@ _.route("/registration").post(CreateUser);
 _.route("/Login").post(LoginController);
 _.route("/OTP_Verify").post(OTPmatchController);
 _.route("/ForgetPassword").post(ForgotPassController);
+_.route("/ResetPassword").post(ResetPassController);
+_.route("/AllRegisteredUsers").get(AllRegisteredUsers);
 
 module.exports = _;
