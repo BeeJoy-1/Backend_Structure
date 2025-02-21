@@ -1,3 +1,5 @@
+//Checkers
+
 const EmailChecker = (email = "blabla@gmail.com") => {
   const EmailRegex =
     /^[a-z0-9]+([._-][0-9a-z]+)*@[a-z0-9]+([.-][0-9a-z]+)*\.[a-z]{1,3}$/;

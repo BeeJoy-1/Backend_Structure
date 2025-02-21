@@ -365,6 +365,60 @@ const AllRegisteredUsers = async (req, res) => {
   }
 };
 
+//Change User Role Controller
+const ChangeRoleController = async (req, res) => {
+  try {
+    const { Email_Adress, Mobile, Role } = req.body;
+    if (!Email_Adress || !Mobile) {
+      return res
+        .status(404)
+        .json(
+          new ApiError(false, null, 400, `Email Address or Mobile Invalid!`)
+        );
+    }
+
+    //Find Email Address and Mobile in Database
+    const ExistUser = await UserModel.find({
+      $or: [{ Email_Adress: Email_Adress }, { Mobile: Mobile }],
+    });
+    if (ExistUser) {
+      if (ExistUser.Role === "User") {
+        ExistUser.Role = Role;
+        await ExistUser.save();
+        return res
+          .status(200)
+          .json(
+            new ApiResponse(
+              true,
+              ExistUser,
+              200,
+              "User Role Changed Successfully!",
+              null
+            )
+          );
+      } else {
+        return res
+          .status(200)
+          .json(
+            new ApiResponse(
+              true,
+              ExistUser.FirstName,
+              200,
+              "You are Already an Admin!",
+              null
+            )
+          );
+      }
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(false, null, 400, `User Role Controller Error : ${error}`)
+      );
+  }
+};
+
 module.exports = {
   CreateUser,
   LoginController,
@@ -372,4 +426,5 @@ module.exports = {
   ForgotPassController,
   ResetPassController,
   AllRegisteredUsers,
+  ChangeRoleController,
 };

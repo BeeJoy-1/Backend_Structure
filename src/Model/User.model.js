@@ -38,6 +38,11 @@ const UserSchema = new Schema(
       required: true,
       trim: true,
     },
+    Role: {
+      type: String,
+      enum: ["Admin", "User", "Merchant"],
+      default: "User",
+    },
     OTP: {
       type: Number,
     },
