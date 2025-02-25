@@ -25,8 +25,15 @@ const options = {
 const CreateUser = asyncHandeller(async (req, res, next) => {
   //send Data to database
   try {
-    const { FirstName, LastName, Email_Adress, Mobile, Address, Password } =
-      req?.body;
+    const {
+      FirstName,
+      LastName,
+      Email_Adress,
+      Mobile,
+      Address,
+      Password,
+      role,
+    } = req?.body;
     if (!FirstName) {
       return res
         .status(404)
@@ -66,6 +73,11 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
           )
         );
     }
+    if (!role) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 500, "role Missing!!"));
+    }
 
     //check if User Already exists or not
     const ExistUser = await UserModel.find({
@@ -96,6 +108,7 @@ const CreateUser = asyncHandeller(async (req, res, next) => {
       Mobile,
       Address,
       Password: HashPassword,
+      role,
     }).save();
 
     // OTP generator
@@ -368,22 +381,23 @@ const AllRegisteredUsers = async (req, res) => {
 //Change User Role Controller
 const ChangeRoleController = async (req, res) => {
   try {
-    const { Email_Adress, Mobile, Role } = req.body;
-    if (!Email_Adress || !Mobile) {
+    const { Email_Adress, Mobile, role } = req.body;
+    if (!Email_Adress || !EmailChecker(Email_Adress) || !Mobile) {
       return res
         .status(404)
         .json(
-          new ApiError(false, null, 400, `Email Address or Mobile Invalid!`)
+          new ApiError(false, null, 500, "Email_Adress or Mobile Invalid!!")
         );
     }
 
     //Find Email Address and Mobile in Database
-    const ExistUser = await UserModel.find({
+    const ExistUser = await UserModel.findOne({
       $or: [{ Email_Adress: Email_Adress }, { Mobile: Mobile }],
     });
+
     if (ExistUser) {
-      if (ExistUser.Role === "User") {
-        ExistUser.Role = Role;
+      if (ExistUser.role === "user") {
+        ExistUser.role = role;
         await ExistUser.save();
         return res
           .status(200)
@@ -398,17 +412,21 @@ const ChangeRoleController = async (req, res) => {
           );
       } else {
         return res
-          .status(200)
+          .status(400)
           .json(
             new ApiResponse(
               true,
               ExistUser.FirstName,
               200,
-              "You are Already an Admin!",
+              "You are Already a Marchent!",
               null
             )
           );
       }
+    } else {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 404, "User not found!"));
     }
   } catch (error) {
     return res

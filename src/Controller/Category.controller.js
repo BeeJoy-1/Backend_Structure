@@ -162,7 +162,8 @@ const ApproveCategory = async (req, res) => {
     const AdminUser = await UserModel.findOne({
       Email_Adress: Email,
     });
-    if (AdminUser?.Role !== "Admin") {
+
+    if (AdminUser?.role !== "admin") {
       return res
         .status(404)
         .json(
