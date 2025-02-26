@@ -23,9 +23,9 @@ const MerchantSchema = new Schema(
       type: String,
       trim: true,
     },
-    Users: {
+    users: {
       type: Schema.Types.ObjectId,
-      ref: "user",
+      ref: "User",
     },
     Products: {
       type: Schema.Types.ObjectId,
