@@ -103,6 +103,47 @@ const GetAllSubCatController = async (req, res) => {
   }
 };
 
+// Get Single SubCategory Controller
+const GetSingleSubCatController = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const FindSingleSubCategory = await SubCatModel.findById({
+      _id: id,
+    }).populate("Category");
+
+    if (FindSingleSubCategory) {
+      return res
+        .status(200)
+        .json(
+          new ApiResponse(
+            true,
+            FindSingleSubCategory,
+            200,
+            "Single SubCategory Found!",
+            null
+          )
+        );
+    } else {
+      return res
+        .status(404)
+        .json(
+          new ApiError(false, null, 400, `Single SubCategory Couldnt be found!`)
+        );
+    }
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          `Get Single SubCategory Controller Error : ${error}`
+        )
+      );
+  }
+};
+
 // Delete Sub Category
 const DeleteSubCategory = async (req, res) => {
   try {
@@ -148,4 +189,5 @@ module.exports = {
   CreateSubCatController,
   GetAllSubCatController,
   DeleteSubCategory,
+  GetSingleSubCatController,
 };
