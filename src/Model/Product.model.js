@@ -18,6 +18,10 @@ const ProductSchema = new Schema(
       ref: "Category",
       required: [true, "Category Required"],
     },
+    SubCategory: {
+      type: Schema.Types.ObjectId,
+      ref: "SubCategory",
+    },
     Price: {
       type: String,
       required: [true, "Price Required"],
@@ -25,7 +29,6 @@ const ProductSchema = new Schema(
     },
     Discount: {
       type: String,
-      required: [true, "Price Required"],
       trim: true,
     },
     Rating: {
@@ -40,10 +43,12 @@ const ProductSchema = new Schema(
     Owner: {
       type: Schema.Types.ObjectId,
       ref: "User",
+      required: [true, "Owner Required!"],
     },
     Store: {
       type: Schema.Types.ObjectId,
       ref: "Store",
+      required: [true, "Store ID Required!"],
     },
     Image: {
       type: String,
