@@ -3,6 +3,7 @@ const { ApiResponse } = require("../Utils/ApiResponse.js");
 const { ProductModel } = require("../Model/Product.model.js");
 const { UploadCloudinary } = require("../Utils/Cloudinary.js");
 
+//Create Product Controller
 const CreateProductController = async (req, res) => {
   try {
     NonRequiredItem = ["Review", "Rating", "Discount", "SubCategory"];
@@ -68,6 +69,34 @@ const CreateProductController = async (req, res) => {
           null,
           400,
           ` Create Product Controller Error : ${error}`
+        )
+      );
+  }
+};
+
+//Get all Product Controller
+const GetAllProduct = async (req, res) => {
+  try {
+    const AllProduct = await ProductModel.find({});
+    if (AllProduct) {
+      return res
+        .status(202)
+        .json(
+          new ApiResponse(true, AllProduct, 200, "Got All Products!", null)
+        );
+    }
+    return res
+      .status(404)
+      .json(new ApiError(false, null, 400, ` Couldnt fetch the Products!`));
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          ` Get All Product Controller Error : ${error}`
         )
       );
   }
