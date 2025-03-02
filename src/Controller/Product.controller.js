@@ -2,6 +2,8 @@ const { ApiError } = require("../Utils/ApiError.js");
 const { ApiResponse } = require("../Utils/ApiResponse.js");
 const { ProductModel } = require("../Model/Product.model.js");
 const { UploadCloudinary } = require("../Utils/Cloudinary.js");
+const NodeCache = require("node-cache");
+const myCache = new NodeCache();
 
 //Create Product Controller
 const CreateProductController = async (req, res) => {
@@ -45,6 +47,8 @@ const CreateProductController = async (req, res) => {
     }).save();
 
     if (SaveData) {
+      //Delete Cache Memory
+      myCache.del("AllProduct");
       return res
         .status(202)
         .json(
@@ -77,17 +81,30 @@ const CreateProductController = async (req, res) => {
 //Get all Product Controller
 const GetAllProduct = async (req, res) => {
   try {
-    const AllProduct = await ProductModel.find({});
-    if (AllProduct) {
+    const value = myCache.get("AllProduct");
+    if (value === undefined) {
+      const AllProduct = await ProductModel.find({});
+      if (AllProduct) {
+        //Cached The Products
+        myCache.set("AllProduct", JSON.stringify(AllProduct));
+        return res
+          .status(202)
+          .json(
+            new ApiResponse(true, AllProduct, 200, "Got All Products!", null)
+          );
+      }
+    } else {
       return res
         .status(202)
         .json(
-          new ApiResponse(true, AllProduct, 200, "Got All Products!", null)
+          new ApiResponse(
+            true,
+            JSON.parse(value),
+            400,
+            `Got All Products but Faster lol!`
+          )
         );
     }
-    return res
-      .status(404)
-      .json(new ApiError(false, null, 400, ` Couldnt fetch the Products!`));
   } catch (error) {
     return res
       .status(404)
@@ -102,4 +119,52 @@ const GetAllProduct = async (req, res) => {
   }
 };
 
-module.exports = { CreateProductController };
+//Update Product Controller
+const UpdateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const Image = req.files?.Image;
+    if (!Image) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 400, ` Image Not Found!`));
+    }
+    if (Image) {
+      ImageInfo = await UploadCloudinary(Image[0].path);
+    }
+
+    const UpdateProductObject = { ...req.body, Image: ImageInfo?.secure_url };
+    const UpdateProduct = await ProductModel.findById(id);
+    console.log(UpdateProduct);
+
+    if (UpdateProduct) {
+      return res
+        .status(202)
+        .json(
+          new ApiResponse(
+            true,
+            UpdateProduct,
+            200,
+            "Product Updated Successfully!",
+            null
+          )
+        );
+    }
+    return res
+      .status(404)
+      .json(new ApiError(false, null, 400, `Updating Product Failed!`));
+  } catch (error) {
+    return res
+      .status(404)
+      .json(
+        new ApiError(
+          false,
+          null,
+          400,
+          ` Get All Product Controller Error : ${error}`
+        )
+      );
+  }
+};
+
+module.exports = { CreateProductController, GetAllProduct, UpdateProduct };

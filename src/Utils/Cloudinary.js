@@ -29,4 +29,18 @@ const UploadCloudinary = async (localfilePath = "public\\temp\\black.jpg") => {
   }
 };
 
+//Delete Image from Cloudinary
+const DeleteImageCloudinary = async (imagePath) => {
+  try {
+    cloudinary.v2.api
+      .delete_resources(["fn0tk9zvvts8llelkoiu"], {
+        type: "upload",
+        resource_type: "image",
+      })
+      .then(console.log);
+  } catch (error) {
+    console.log("From Cloudinary Delete error: ", error);
+  }
+};
+
 module.exports = { UploadCloudinary };
