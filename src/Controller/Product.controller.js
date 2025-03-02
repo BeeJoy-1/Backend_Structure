@@ -27,8 +27,38 @@ const CreateProductController = async (req, res) => {
         .json(new ApiError(false, null, 400, ` Image Not Found!`));
     }
 
+    //Find Existed Product
+    const ExistedProduct = await ProductModel.find({ Name: req.body.Name });
+    if (ExistedProduct?.length) {
+      return res
+        .status(404)
+        .json(new ApiError(false, null, 400, ` Product Already Exists!`));
+    }
+
     const ImageInfo = await UploadCloudinary(Image[0].path);
-    console.log(ImageInfo?.secure_url);
+
+    //Save Date in Database
+    const SaveData = await new ProductModel({
+      ...req.body,
+      Image: ImageInfo.secure_url,
+    }).save();
+
+    if (SaveData) {
+      return res
+        .status(202)
+        .json(
+          new ApiResponse(
+            true,
+            SaveData,
+            200,
+            "Product Created Successfully",
+            null
+          )
+        );
+    }
+    return res
+      .status(404)
+      .json(new ApiError(false, null, 400, ` Product Couldnt be Created!`));
   } catch (error) {
     return res
       .status(404)

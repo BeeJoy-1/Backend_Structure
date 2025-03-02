@@ -22,6 +22,8 @@ const UploadCloudinary = async (localfilePath = "public\\temp\\black.jpg") => {
         console.log("Image Unlinksync error", err);
       }
     });
+
+    return uploadResult;
   } catch (error) {
     console.log("From Cloudinary Uploader error: ", error);
   }
